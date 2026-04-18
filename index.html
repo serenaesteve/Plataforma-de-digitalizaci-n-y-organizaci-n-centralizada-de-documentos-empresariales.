@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DocVault — Gestión Documental</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg2: #111118;
+  --bg3: #18181f;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --pink: #E8186D;
+  --pink2: #ff2d7e;
+  --pink-dim: rgba(232,24,109,0.15);
+  --pink-glow: rgba(232,24,109,0.08);
+  --text: #f0f0f5;
+  --text2: #9090a0;
+  --text3: #606070;
+  --green: #00d68f;
+  --blue: #4d9fff;
+  --yellow: #ffd166;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow: hidden; }
+
+/* ── Login ── */
+#login-screen {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+  background-image: radial-gradient(ellipse 60% 60% at 50% 0%, rgba(232,24,109,0.12) 0%, transparent 70%);
+  z-index: 1000;
+}
+.login-box {
+  width: 380px; padding: 48px 40px;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(232,24,109,0.1);
+}
+.login-logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px; font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+}
+.login-logo span { color: var(--pink); }
+.login-sub { color: var(--text2); font-size: 13px; margin-bottom: 36px; }
+.form-field { margin-bottom: 16px; }
+.form-field label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 8px; letter-spacing: 0.05em; text-transform: uppercase; }
+.form-field input, .form-field select {
+  width: 100%; padding: 12px 16px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  outline: none; transition: border-color 0.2s;
+}
+.form-field input:focus, .form-field select:focus { border-color: var(--pink); }
+.btn-primary {
+  width: 100%; padding: 13px;
+  background: var(--pink); border: none; border-radius: var(--radius-sm);
+  color: white; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+  letter-spacing: 0.05em; cursor: pointer;
+  transition: all 0.2s; margin-top: 8px;
+}
+.btn-primary:hover { background: var(--pink2); transform: translateY(-1px); }
+.login-error { color: var(--pink); font-size: 12px; margin-top: 12px; text-align: center; }
+
+/* ── Layout ── */
+#app { display: flex; height: 100vh; }
+#sidebar {
+  width: 240px; min-width: 240px;
+  background: var(--bg2); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  padding: 24px 0;
+}
+.sidebar-logo {
+  font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800;
+  padding: 0 24px 24px;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: -0.5px;
+}
+.sidebar-logo span { color: var(--pink); }
+.sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+.nav-section { margin-bottom: 24px; }
+.nav-section-title {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text3);
+  padding: 0 12px; margin-bottom: 8px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: var(--radius-sm);
+  cursor: pointer; transition: all 0.15s; color: var(--text2);
+  font-size: 13.5px; font-weight: 400;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: var(--pink-dim); color: var(--pink); }
+.nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+.folder-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; border-radius: var(--radius-sm);
+  cursor: pointer; transition: all 0.15s; color: var(--text2);
+  font-size: 13px;
+}
+.folder-item:hover { background: var(--bg3); color: var(--text); }
+.folder-item.active { background: var(--pink-dim); color: var(--pink); }
+.folder-item .badge {
+  font-size: 10px; background: var(--bg3); color: var(--text3);
+  padding: 1px 6px; border-radius: 10px;
+}
+.folder-add-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px; cursor: pointer;
+  color: var(--text3); font-size: 12px; transition: color 0.15s;
+}
+.folder-add-btn:hover { color: var(--pink); }
+.sidebar-user {
+  margin: 0 12px; padding: 12px;
+  background: var(--bg3); border-radius: var(--radius-sm);
+  display: flex; align-items: center; gap: 10px;
+}
+.user-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--pink-dim); border: 1px solid var(--pink);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+  color: var(--pink); flex-shrink: 0;
+}
+.user-info { flex: 1; min-width: 0; }
+.user-name { font-size: 13px; font-weight: 500; truncate: ellipsis; overflow: hidden; white-space: nowrap; }
+.user-role { font-size: 11px; color: var(--text3); }
+.btn-logout {
+  background: none; border: none; cursor: pointer; color: var(--text3);
+  font-size: 14px; transition: color 0.15s;
+}
+.btn-logout:hover { color: var(--pink); }
+
+/* ── Main ── */
+#main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar {
+  padding: 16px 28px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 16px;
+  background: var(--bg2);
+}
+.topbar-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; flex: 1; }
+.search-box {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 8px 14px;
+  min-width: 280px;
+}
+.search-box input {
+  background: none; border: none; outline: none;
+  color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px;
+  width: 100%;
+}
+.search-box input::placeholder { color: var(--text3); }
+.btn-action {
+  display: flex; align-items: center; gap: 6px;
+  padding: 9px 16px; border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s; border: none;
+}
+.btn-action.primary { background: var(--pink); color: white; }
+.btn-action.primary:hover { background: var(--pink2); }
+.btn-action.ghost { background: var(--bg3); color: var(--text2); border: 1px solid var(--border2); }
+.btn-action.ghost:hover { color: var(--text); border-color: var(--border2); }
+.btn-action.danger { background: rgba(255,60,60,0.1); color: #ff6060; border: 1px solid rgba(255,60,60,0.2); }
+.btn-action.danger:hover { background: rgba(255,60,60,0.2); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+/* ── Content ── */
+#content { flex: 1; overflow-y: auto; padding: 28px; }
+
+/* ── Stats ── */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+.stat-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px 24px;
+  transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: var(--border2); }
+.stat-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); margin-bottom: 10px; }
+.stat-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--text); }
+.stat-value .unit { font-size: 14px; color: var(--text2); font-weight: 500; }
+.stat-icon { float: right; font-size: 22px; opacity: 0.3; }
+
+/* ── Table ── */
+.docs-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.docs-header h2 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+.table-wrap {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+table { width: 100%; border-collapse: collapse; }
+th {
+  padding: 12px 16px; text-align: left;
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text3); border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+td {
+  padding: 13px 16px; border-bottom: 1px solid var(--border);
+  font-size: 13px; color: var(--text2); vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+.doc-name { color: var(--text); font-weight: 500; font-size: 14px; cursor: pointer; }
+.doc-name:hover { color: var(--pink); }
+.file-badge {
+  display: inline-block; padding: 2px 8px;
+  border-radius: 4px; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  font-family: 'DM Mono', monospace;
+}
+.ext-pdf { background: rgba(255,60,60,0.15); color: #ff7070; }
+.ext-docx { background: rgba(77,159,255,0.15); color: #7ab8ff; }
+.ext-xlsx { background: rgba(0,214,143,0.15); color: #00d68f; }
+.ext-png, .ext-jpg, .ext-jpeg { background: rgba(255,209,102,0.15); color: #ffd166; }
+.ext-txt, .ext-csv { background: rgba(160,160,200,0.15); color: #a0a0cc; }
+.tag {
+  display: inline-block; padding: 2px 8px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 4px; font-size: 11px; color: var(--text3);
+  margin: 2px;
+}
+.actions-cell { display: flex; gap: 6px; }
+.icon-btn {
+  width: 28px; height: 28px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.15s; border: none;
+  font-size: 14px; background: var(--bg3); color: var(--text3);
+}
+.icon-btn:hover { background: var(--border2); color: var(--text); }
+.icon-btn.pink:hover { background: var(--pink-dim); color: var(--pink); }
+.icon-btn.danger:hover { background: rgba(255,60,60,0.1); color: #ff6060; }
+.empty-state {
+  text-align: center; padding: 60px 20px;
+  color: var(--text3); font-size: 14px;
+}
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.3; }
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 500; backdrop-filter: blur(4px);
+}
+.modal {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 32px;
+  width: 540px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+}
+.modal-lg { width: 720px; }
+.modal h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+.doc-preview-text {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 16px;
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  color: var(--text2); max-height: 200px; overflow-y: auto;
+  white-space: pre-wrap; line-height: 1.6;
+}
+.ai-result {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 16px; margin-top: 12px;
+}
+.ai-section { margin-bottom: 12px; }
+.ai-section-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+.ai-section-body { font-size: 13px; color: var(--text2); line-height: 1.6; }
+.key-info-item { padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text2); }
+.key-info-item:last-child { border-bottom: none; }
+
+/* ── Drop zone ── */
+.drop-zone {
+  border: 2px dashed var(--border2); border-radius: var(--radius);
+  padding: 40px 20px; text-align: center; cursor: pointer;
+  transition: all 0.2s; margin-bottom: 16px;
+}
+.drop-zone:hover, .drop-zone.drag-over { border-color: var(--pink); background: var(--pink-glow); }
+.drop-zone .icon { font-size: 36px; margin-bottom: 10px; opacity: 0.4; }
+.drop-zone p { color: var(--text3); font-size: 13px; }
+.drop-zone p span { color: var(--pink); cursor: pointer; }
+#file-input { display: none; }
+
+/* ── Upload list ── */
+.upload-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; background: var(--bg3); border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+}
+.upload-item .file-name { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.upload-item .file-size { font-size: 11px; color: var(--text3); }
+.progress-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 4px; }
+.progress-fill { height: 100%; background: var(--pink); border-radius: 2px; transition: width 0.3s; }
+
+/* ── View selector ── */
+.view-toggle { display: flex; gap: 2px; background: var(--bg3); padding: 3px; border-radius: 8px; }
+.view-btn {
+  width: 30px; height: 28px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; border-radius: 6px; font-size: 14px; color: var(--text3);
+  border: none; background: none; transition: all 0.15s;
+}
+.view-btn.active { background: var(--bg2); color: var(--pink); }
+
+/* ── Grid view ── */
+.docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.doc-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 16px;
+  cursor: pointer; transition: all 0.2s;
+}
+.doc-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+.doc-card-icon { font-size: 36px; margin-bottom: 12px; }
+.doc-card-name { font-size: 13px; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 6px; }
+.doc-card-meta { font-size: 11px; color: var(--text3); }
+.doc-card-actions { display: flex; gap: 4px; margin-top: 12px; justify-content: flex-end; }
+
+/* ── Folders view ── */
+.folders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 28px; }
+.folder-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+  cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 14px;
+}
+.folder-card:hover { border-color: var(--pink); }
+.folder-card .folder-icon { font-size: 28px; }
+.folder-card .folder-meta h4 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.folder-card .folder-meta p { font-size: 11px; color: var(--text3); }
+
+/* ── Users ── */
+.users-table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.role-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.role-admin { background: rgba(232,24,109,0.15); color: var(--pink); }
+.role-editor { background: rgba(77,159,255,0.15); color: var(--blue); }
+.role-viewer { background: rgba(144,144,160,0.1); color: var(--text3); }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--bg2); border: 1px solid var(--border2);
+  padding: 14px 20px; border-radius: var(--radius-sm);
+  font-size: 13px; z-index: 999;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  animation: slideUp 0.3s ease;
+}
+.toast.success { border-left: 3px solid var(--green); }
+.toast.error { border-left: 3px solid var(--pink); }
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Doc<span>Vault</span></div>
+    <p class="login-sub">Plataforma de gestión documental empresarial</p>
+    <div class="form-field">
+      <label>Usuario</label>
+      <input type="text" id="login-user" placeholder="admin" value="admin">
+    </div>
+    <div class="form-field">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="••••••••" value="admin123">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Entrar →</button>
+    <p class="login-error" id="login-error"></p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;">
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sidebar-logo">Doc<span>Vault</span></div>
+    <div class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Principal</div>
+        <div class="nav-item active" onclick="navigate('dashboard')" id="nav-dashboard">
+          <span class="icon">⊞</span> Dashboard
+        </div>
+        <div class="nav-item" onclick="navigate('documents')" id="nav-documents">
+          <span class="icon">📄</span> Documentos
+        </div>
+        <div class="nav-item" onclick="navigate('folders')" id="nav-folders">
+          <span class="icon">📁</span> Carpetas
+        </div>
+      </div>
+      <div class="nav-section" id="admin-nav" style="display:none;">
+        <div class="nav-section-title">Admin</div>
+        <div class="nav-item" onclick="navigate('users')" id="nav-users">
+          <span class="icon">👥</span> Usuarios
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Carpetas</div>
+        <div id="folder-list"></div>
+        <div class="folder-add-btn" onclick="showCreateFolderModal()">
+          <span>+</span> Nueva carpeta
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name-display">—</div>
+        <div class="user-role" id="user-role-display">—</div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()" title="Cerrar sesión">⎋</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="search-box" id="search-box" style="display:none;">
+        <span style="color:var(--text3);">🔍</span>
+        <input type="text" placeholder="Buscar documentos..." id="search-input" oninput="handleSearch()">
+      </div>
+      <div id="topbar-actions"></div>
+    </div>
+    <div id="content"></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div id="modal-container"></div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────
+let currentUser = null;
+let currentPage = 'dashboard';
+let currentFolder = null;
+let allFolders = [];
+let searchTimeout = null;
+
+// ─── API ──────────────────────────────────────────────────────────────────
+async function api(path, opts = {}) {
+  const res = await fetch('/api' + path, {
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include', ...opts
+  });
+  if (opts.raw) return res;
+  return res.json();
+}
+
+// ─── Auth ──────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const u = document.getElementById('login-user').value;
+  const p = document.getElementById('login-pass').value;
+  const res = await api('/auth/login', { method: 'POST', body: JSON.stringify({ username: u, password: p }) });
+  if (res.error) {
+    document.getElementById('login-error').textContent = res.error;
+    return;
+  }
+  currentUser = res;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('user-name-display').textContent = res.username;
+  document.getElementById('user-role-display').textContent = res.role;
+  document.getElementById('user-avatar').textContent = res.username[0].toUpperCase();
+  if (res.role === 'admin') document.getElementById('admin-nav').style.display = 'block';
+  await loadFolders();
+  navigate('dashboard');
+}
+
+async function doLogout() {
+  await api('/auth/logout', { method: 'POST' });
+  location.reload();
+}
+
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+// ─── Navigation ───────────────────────────────────────────────────────────
+function navigate(page, folderId = null) {
+  currentPage = page;
+  currentFolder = folderId;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + page);
+  if (navEl) navEl.classList.add('active');
+  document.getElementById('page-title').textContent =
+    page === 'dashboard' ? 'Dashboard' :
+    page === 'documents' ? (folderId ? allFolders.find(f=>f.id==folderId)?.name || 'Documentos' : 'Todos los documentos') :
+    page === 'folders' ? 'Carpetas' : 'Usuarios';
+  const searchBox = document.getElementById('search-box');
+  const topbarActions = document.getElementById('topbar-actions');
+  searchBox.style.display = page === 'documents' ? 'flex' : 'none';
+  if (page === 'documents') {
+    topbarActions.innerHTML = `<button class="btn-action primary" onclick="showUploadModal()">↑ Subir documento</button>`;
+    renderDocuments();
+  } else if (page === 'dashboard') {
+    topbarActions.innerHTML = '';
+    renderDashboard();
+  } else if (page === 'folders') {
+    topbarActions.innerHTML = `<button class="btn-action ghost" onclick="showCreateFolderModal()">+ Nueva carpeta</button>`;
+    renderFolderPage();
+  } else if (page === 'users') {
+    topbarActions.innerHTML = `<button class="btn-action primary" onclick="showCreateUserModal()">+ Nuevo usuario</button>`;
+    renderUsers();
+  }
+}
+
+// ─── Folders ──────────────────────────────────────────────────────────────
+async function loadFolders() {
+  allFolders = await api('/folders');
+  const list = document.getElementById('folder-list');
+  list.innerHTML = allFolders.map(f => `
+    <div class="folder-item ${currentFolder==f.id?'active':''}" onclick="navigate('documents',${f.id})">
+      <span>📁 ${f.name}</span>
+      <span class="badge">${f.doc_count}</span>
+    </div>
+  `).join('');
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────
+async function renderDashboard() {
+  const c = document.getElementById('content');
+  c.innerHTML = `<div style="color:var(--text3);font-size:13px;">Cargando...</div>`;
+  const stats = await api('/stats');
+  const byType = stats.by_type || [];
+  c.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📄</div>
+        <div class="stat-label">Documentos</div>
+        <div class="stat-value">${stats.total_docs}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📁</div>
+        <div class="stat-label">Carpetas</div>
+        <div class="stat-value">${stats.total_folders}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-label">Usuarios</div>
+        <div class="stat-value">${stats.total_users}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💾</div>
+        <div class="stat-label">Almacenamiento</div>
+        <div class="stat-value">${formatBytes(stats.total_size)}</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div>
+        <div class="docs-header"><h2>Documentos recientes</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nombre</th><th>Por</th><th>Fecha</th></tr></thead>
+            <tbody>
+              ${stats.recent.length ? stats.recent.map(r => `
+                <tr>
+                  <td style="color:var(--text);font-size:13px;">${escHtml(r.original_name)}</td>
+                  <td>${escHtml(r.username)}</td>
+                  <td>${formatDate(r.created_at)}</td>
+                </tr>
+              `).join('') : `<tr><td colspan="3" class="empty-state">Sin documentos aún</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="docs-header"><h2>Por tipo de archivo</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Tipo</th><th>Cantidad</th></tr></thead>
+            <tbody>
+              ${byType.length ? byType.map(t => `
+                <tr>
+                  <td><span class="file-badge ext-${t.file_type.replace('.','')}">${t.file_type.replace('.','').toUpperCase()}</span></td>
+                  <td style="color:var(--text);">${t.count}</td>
+                </tr>
+              `).join('') : `<tr><td colspan="2" class="empty-state">Sin datos</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Documents ────────────────────────────────────────────────────────────
+async function renderDocuments(query = '') {
+  const c = document.getElementById('content');
+  let url = '/documents';
+  const params = [];
+  if (currentFolder) params.push('folder_id=' + currentFolder);
+  if (query) params.push('q=' + encodeURIComponent(query));
+  if (params.length) url += '?' + params.join('&');
+  const docs = await api(url);
+  if (!docs || docs.error) { c.innerHTML = `<p style="color:var(--pink);">Error cargando documentos</p>`; return; }
+  if (!docs.length) {
+    c.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No hay documentos aquí.<br>Sube el primero con el botón de arriba.</p></div>`;
+    return;
+  }
+  c.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th><th>Tipo</th><th>Carpeta</th>
+            <th>Tamaño</th><th>Subido por</th><th>Fecha</th><th>Etiquetas</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${docs.map(d => {
+            let tags = [];
+            try { tags = JSON.parse(d.tags || '[]'); } catch {}
+            return `
+            <tr>
+              <td>
+                <span class="doc-name" onclick="showDocDetail(${d.id})">${escHtml(d.original_name)}</span>
+              </td>
+              <td><span class="file-badge ext-${d.file_type?.replace('.','')}">${(d.file_type||'').replace('.','').toUpperCase()}</span></td>
+              <td>${d.folder_name ? `<span style="font-size:12px;color:var(--text3);">📁 ${escHtml(d.folder_name)}</span>` : '—'}</td>
+              <td><span style="font-family:'DM Mono',monospace;font-size:12px;">${formatBytes(d.file_size)}</span></td>
+              <td>${escHtml(d.owner_name)}</td>
+              <td><span style="font-size:12px;">${formatDate(d.created_at)}</span></td>
+              <td>${tags.slice(0,2).map(t=>`<span class="tag">${escHtml(t)}</span>`).join('')}</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="icon-btn pink" onclick="showDocDetail(${d.id})" title="Ver detalles">🔍</button>
+                  <button class="icon-btn" onclick="downloadDoc(${d.id})" title="Descargar">⬇</button>
+                  <button class="icon-btn danger" onclick="deleteDoc(${d.id})" title="Eliminar">🗑</button>
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function handleSearch() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    renderDocuments(document.getElementById('search-input').value);
+  }, 300);
+}
+
+async function downloadDoc(id) {
+  window.location = '/api/documents/' + id + '/download';
+}
+
+async function deleteDoc(id) {
+  if (!confirm('¿Eliminar este documento?')) return;
+  await api('/documents/' + id, { method: 'DELETE' });
+  toast('Documento eliminado', 'success');
+  renderDocuments(document.getElementById('search-input')?.value || '');
+}
+
+// ─── Doc detail modal ─────────────────────────────────────────────────────
+async function showDocDetail(id) {
+  const doc = await api('/documents/' + id);
+  let aiParsed = null;
+  try { aiParsed = doc.ai_summary ? JSON.parse(doc.ai_summary) : null; } catch {}
+  let tags = [];
+  try { tags = JSON.parse(doc.tags || '[]'); } catch {}
+
+  showModal(`
+    <h3>📄 ${escHtml(doc.original_name)}</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div style="background:var(--bg3);border-radius:8px;padding:14px;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Información</div>
+        <div style="font-size:13px;color:var(--text2);line-height:2;">
+          Tipo: <span class="file-badge ext-${doc.file_type?.replace('.','')}">${(doc.file_type||'').replace('.','').toUpperCase()}</span><br>
+          Tamaño: ${formatBytes(doc.file_size)}<br>
+          Subido: ${formatDate(doc.created_at)}<br>
+          Por: ${escHtml(doc.owner_name)}<br>
+          Carpeta: ${doc.folder_name || '—'}
+        </div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:14px;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Etiquetas</div>
+        <div>${tags.map(t=>`<span class="tag">${escHtml(t)}</span>`).join('') || '<span style="color:var(--text3);font-size:12px;">Sin etiquetas</span>'}</div>
+        <div style="margin-top:12px;">
+          <select id="move-folder-select" style="background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);padding:6px 10px;font-size:12px;width:100%;">
+            <option value="">Sin carpeta</option>
+            ${allFolders.map(f=>`<option value="${f.id}" ${doc.folder_id==f.id?'selected':''}>${f.name}</option>`).join('')}
+          </select>
+          <button class="btn-action ghost btn-sm" style="margin-top:6px;width:100%;" onclick="moveDoc(${id})">Mover a carpeta</button>
+        </div>
+      </div>
+    </div>
+    ${doc.extracted_text ? `
+    <div style="margin-bottom:16px;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Texto extraído (OCR)</div>
+      <div class="doc-preview-text">${escHtml(doc.extracted_text.substring(0, 1200))}${doc.extracted_text.length > 1200 ? '...' : ''}</div>
+    </div>` : ''}
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;">Análisis IA</div>
+        <button class="btn-action ghost btn-sm" onclick="reanalyze(${id})" id="analyze-btn">✦ Analizar con IA</button>
+      </div>
+      <div id="ai-result-area">
+        ${aiParsed ? renderAIResult(aiParsed) : '<div style="color:var(--text3);font-size:13px;padding:12px 0;">Sin análisis todavía. Haz clic en "Analizar con IA" para generar uno.</div>'}
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-action ghost" onclick="closeModal()">Cerrar</button>
+      <button class="btn-action primary" onclick="downloadDoc(${id})">⬇ Descargar</button>
+    </div>
+  `, true);
+}
+
+function renderAIResult(p) {
+  return `
+    <div class="ai-result">
+      ${p.document_type ? `<div class="ai-section"><div class="ai-section-title">Tipo de documento</div><div class="ai-section-body"><span class="file-badge" style="background:var(--pink-dim);color:var(--pink);">${escHtml(p.document_type)}</span></div></div>` : ''}
+      ${p.summary ? `<div class="ai-section"><div class="ai-section-title">Resumen</div><div class="ai-section-body">${escHtml(p.summary)}</div></div>` : ''}
+      ${p.key_info?.length ? `<div class="ai-section"><div class="ai-section-title">Datos clave</div>${p.key_info.map(k=>`<div class="key-info-item">• ${escHtml(k)}</div>`).join('')}</div>` : ''}
+      ${p.suggested_tags?.length ? `<div class="ai-section"><div class="ai-section-title">Etiquetas sugeridas</div><div>${p.suggested_tags.map(t=>`<span class="tag">${escHtml(t)}</span>`).join('')}</div></div>` : ''}
+    </div>
+  `;
+}
+
+async function reanalyze(id) {
+  const btn = document.getElementById('analyze-btn');
+  btn.textContent = '⏳ Analizando...'; btn.disabled = true;
+  const res = await api('/documents/' + id + '/ai-analyze', { method: 'POST' });
+  btn.textContent = '✦ Analizar con IA'; btn.disabled = false;
+  if (res.result) {
+    let p;
+    try { p = JSON.parse(res.result); } catch {}
+    document.getElementById('ai-result-area').innerHTML = p ? renderAIResult(p) : `<pre style="font-size:12px;color:var(--text2);">${escHtml(res.result)}</pre>`;
+    toast('Análisis completado', 'success');
+    renderDocuments();
+  } else {
+    toast('Error al analizar (¿Ollama corriendo?)', 'error');
+  }
+}
+
+async function moveDoc(id) {
+  const fid = document.getElementById('move-folder-select').value;
+  await api('/documents/' + id, { method: 'PATCH', body: JSON.stringify({ folder_id: fid || null }) });
+  toast('Documento movido', 'success');
+  await loadFolders();
+  closeModal();
+  renderDocuments();
+}
+
+// ─── Upload modal ─────────────────────────────────────────────────────────
+function showUploadModal() {
+  showModal(`
+    <h3>↑ Subir documentos</h3>
+    <div class="form-field">
+      <label>Carpeta destino</label>
+      <select id="upload-folder">
+        <option value="">Sin carpeta</option>
+        ${allFolders.map(f=>`<option value="${f.id}" ${currentFolder==f.id?'selected':''}>${f.name}</option>`).join('')}
+      </select>
+    </div>
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <div class="icon">📂</div>
+      <p>Arrastra archivos aquí o <span>haz clic para seleccionar</span></p>
+      <p style="margin-top:6px;font-size:11px;">PDF, DOCX, XLSX, PNG, JPG, TXT, CSV · Máx. 50MB</p>
+    </div>
+    <input type="file" id="file-input" multiple accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg,.txt,.csv" onchange="handleFiles(this.files)">
+    <div id="upload-list"></div>
+    <div class="modal-footer">
+      <button class="btn-action ghost" onclick="closeModal()">Cerrar</button>
+    </div>
+  `);
+
+  const dz = document.getElementById('drop-zone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
+}
+
+async function handleFiles(files) {
+  const folderId = document.getElementById('upload-folder').value;
+  const list = document.getElementById('upload-list');
+  for (const file of files) {
+    const itemId = 'up-' + Date.now() + Math.random().toString(36).slice(2);
+    list.insertAdjacentHTML('beforeend', `
+      <div class="upload-item" id="${itemId}">
+        <span style="font-size:20px;">${fileIcon(file.name)}</span>
+        <div style="flex:1">
+          <div class="file-name">${escHtml(file.name)}</div>
+          <div class="file-size">${formatBytes(file.size)}</div>
+          <div class="progress-bar"><div class="progress-fill" id="${itemId}-bar" style="width:0%"></div></div>
+        </div>
+        <span id="${itemId}-status" style="font-size:12px;color:var(--text3);">↑</span>
+      </div>
+    `);
+    const fd = new FormData();
+    fd.append('file', file);
+    if (folderId) fd.append('folder_id', folderId);
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = e => {
+        if (e.lengthComputable) {
+          const pct = (e.loaded / e.total * 100).toFixed(0);
+          const bar = document.getElementById(itemId + '-bar');
+          if (bar) bar.style.width = pct + '%';
+        }
+      };
+      await new Promise((res, rej) => {
+        xhr.onload = () => {
+          const r = JSON.parse(xhr.responseText);
+          if (r.ok) {
+            const bar = document.getElementById(itemId + '-bar');
+            if (bar) { bar.style.width = '100%'; bar.style.background = 'var(--green)'; }
+            const st = document.getElementById(itemId + '-status');
+            if (st) st.textContent = '✓';
+            res(r);
+          } else {
+            const st = document.getElementById(itemId + '-status');
+            if (st) { st.textContent = '✗'; st.style.color = 'var(--pink)'; }
+            res(r);
+          }
+        };
+        xhr.onerror = rej;
+        xhr.open('POST', '/api/documents/upload');
+        xhr.withCredentials = true;
+        xhr.send(fd);
+      });
+    } catch (e) {
+      const st = document.getElementById(itemId + '-status');
+      if (st) { st.textContent = '✗'; st.style.color = 'var(--pink)'; }
+    }
+  }
+  await loadFolders();
+  if (currentPage === 'documents') renderDocuments();
+  toast(`${files.length} archivo(s) subido(s)`, 'success');
+}
+
+// ─── Folders page ─────────────────────────────────────────────────────────
+async function renderFolderPage() {
+  const c = document.getElementById('content');
+  c.innerHTML = `
+    <div class="folders-grid">
+      ${allFolders.map(f => `
+        <div class="folder-card" onclick="navigate('documents',${f.id})">
+          <span class="folder-icon">📁</span>
+          <div class="folder-meta">
+            <h4>${escHtml(f.name)}</h4>
+            <p>${f.doc_count} documentos</p>
+          </div>
+          <button class="icon-btn danger" onclick="event.stopPropagation();deleteFolder(${f.id})" title="Eliminar carpeta" style="margin-left:auto;">🗑</button>
+        </div>
+      `).join('') || '<p style="color:var(--text3);font-size:13px;">No hay carpetas todavía.</p>'}
+    </div>
+  `;
+}
+
+function showCreateFolderModal() {
+  showModal(`
+    <h3>📁 Nueva carpeta</h3>
+    <div class="form-field">
+      <label>Nombre</label>
+      <input type="text" id="folder-name" placeholder="ej. Contratos 2024" style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:12px 16px;width:100%;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-action ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn-action primary" onclick="createFolder()">Crear</button>
+    </div>
+  `);
+  setTimeout(() => document.getElementById('folder-name')?.focus(), 100);
+}
+
+async function createFolder() {
+  const name = document.getElementById('folder-name').value.trim();
+  if (!name) return;
+  await api('/folders', { method: 'POST', body: JSON.stringify({ name }) });
+  await loadFolders();
+  closeModal();
+  if (currentPage === 'folders') renderFolderPage();
+  toast('Carpeta creada', 'success');
+}
+
+async function deleteFolder(id) {
+  if (!confirm('¿Eliminar esta carpeta? Los documentos quedarán sin carpeta.')) return;
+  await api('/folders/' + id, { method: 'DELETE' });
+  await loadFolders();
+  if (currentPage === 'folders') renderFolderPage();
+  else if (currentFolder == id) navigate('documents');
+  toast('Carpeta eliminada', 'success');
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────
+async function renderUsers() {
+  const c = document.getElementById('content');
+  const users = await api('/users');
+  c.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Usuario</th><th>Rol</th><th>Fecha registro</th><th></th></tr></thead>
+        <tbody>
+          ${users.map(u => `
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="user-avatar" style="width:28px;height:28px;font-size:11px;">${u.username[0].toUpperCase()}</div>
+                  <span style="color:var(--text);font-weight:500;">${escHtml(u.username)}</span>
+                </div>
+              </td>
+              <td><span class="role-badge role-${u.role}">${u.role}</span></td>
+              <td><span style="font-size:12px;">${formatDate(u.created_at)}</span></td>
+              <td>
+                ${u.id !== currentUser.id ? `<button class="icon-btn danger" onclick="deleteUser(${u.id})">🗑</button>` : ''}
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function showCreateUserModal() {
+  showModal(`
+    <h3>👤 Nuevo usuario</h3>
+    <div class="form-field">
+      <label>Usuario</label>
+      <input type="text" id="new-username" placeholder="nombre.apellido">
+    </div>
+    <div class="form-field">
+      <label>Contraseña</label>
+      <input type="password" id="new-password" placeholder="mínimo 8 caracteres">
+    </div>
+    <div class="form-field">
+      <label>Rol</label>
+      <select id="new-role">
+        <option value="viewer">Viewer — solo lectura</option>
+        <option value="editor">Editor — puede subir documentos</option>
+        <option value="admin">Admin — acceso total</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-action ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn-action primary" onclick="createUser()">Crear usuario</button>
+    </div>
+  `);
+}
+
+async function createUser() {
+  const u = document.getElementById('new-username').value.trim();
+  const p = document.getElementById('new-password').value;
+  const r = document.getElementById('new-role').value;
+  if (!u || !p) { toast('Rellena todos los campos', 'error'); return; }
+  const res = await api('/auth/register', { method: 'POST', body: JSON.stringify({ username: u, password: p, role: r }) });
+  if (res.error) { toast(res.error, 'error'); return; }
+  closeModal();
+  toast('Usuario creado', 'success');
+  renderUsers();
+}
+
+async function deleteUser(id) {
+  if (!confirm('¿Eliminar este usuario?')) return;
+  await api('/users/' + id, { method: 'DELETE' });
+  toast('Usuario eliminado', 'success');
+  renderUsers();
+}
+
+// ─── Modal helpers ────────────────────────────────────────────────────────
+function showModal(html, large = false) {
+  document.getElementById('modal-container').innerHTML = `
+    <div class="modal-overlay" onclick="closeModalOverlay(event)">
+      <div class="modal ${large ? 'modal-lg' : ''}">${html}</div>
+    </div>
+  `;
+}
+function closeModal() { document.getElementById('modal-container').innerHTML = ''; }
+function closeModalOverlay(e) { if (e.target.classList.contains('modal-overlay')) closeModal(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ─── Utils ────────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function formatBytes(b) {
+  if (!b) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(b) / Math.log(k));
+  return parseFloat((b / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function formatDate(str) {
+  if (!str) return '—';
+  const d = new Date(str);
+  return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  return { pdf: '📕', docx: '📘', xlsx: '📗', png: '🖼', jpg: '🖼', jpeg: '🖼', txt: '📝', csv: '📊' }[ext] || '📄';
+}
+
+// ─── Init check ───────────────────────────────────────────────────────────
+(async () => {
+  const res = await api('/auth/me');
+  if (res && !res.error) {
+    currentUser = res;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    document.getElementById('user-name-display').textContent = res.username;
+    document.getElementById('user-role-display').textContent = res.role;
+    document.getElementById('user-avatar').textContent = res.username[0].toUpperCase();
+    if (res.role === 'admin') document.getElementById('admin-nav').style.display = 'block';
+    await loadFolders();
+    navigate('dashboard');
+  }
+})();
+</script>
+</body>
+</html>
